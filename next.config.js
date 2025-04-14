@@ -5,7 +5,8 @@ const nextConfig = {
     unoptimized: true,
   },
   basePath: '/saas-maps-v3',
-  assetPrefix: '/saas-maps-v3',
+  assetPrefix: '/saas-maps-v3/',
+  trailingSlash: true,
 }
 
 module.exports = nextConfig 
