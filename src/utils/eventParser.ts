@@ -14,6 +14,7 @@ const geocodeLocation = async (location: string): Promise<[number, number]> => {
     if (data && data[0]) {
       return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
     }
+    console.warn(`Could not geocode location: ${location}`);
     return [0, 0]; // Default coordinates if geocoding fails
   } catch (error) {
     console.error('Error geocoding location:', error);
@@ -57,32 +58,52 @@ const cityCoordinates: Record<string, [number, number]> = {
   'Cologne': [50.9375, 6.9603],
   'Bucharest': [44.4268, 26.1025],
   'Sibenik': [43.7350, 15.8952],
+  'Cambridge': [52.2053, 0.1218],
+  'Multiple cities': [0, 0],
+  'New Orleans': [29.9511, -90.0715],
 };
 
 export async function parseEvents(): Promise<EventLocation[]> {
   try {
     const filePath = path.join(process.cwd(), 'src/data/locations.md');
     const fileContent = fs.readFileSync(filePath, 'utf8');
-    const lines = fileContent.split('\n');
-
-    // Remove the header row and empty lines
-    const eventLines = lines.slice(2).filter(line => line.trim() !== '');
+    const lines = fileContent.split('\n').map(line => line.trim()).filter(line => line);
 
     const events: EventLocation[] = [];
     let currentRegion = '';
+    let regionCounts: Record<string, number> = {};
 
-    for (const line of eventLines) {
-      if (!line.includes('\t')) {
-        currentRegion = line.replace('Conferences', '').trim();
+    // Skip the header row
+    let isHeader = true;
+
+    for (const line of lines) {
+      // Skip the table separator line (contains only | and -)
+      if (line.match(/^\|[-\s|]+\|$/)) {
         continue;
       }
 
-      const [name, dateLocation, size, description, url, price] = line.split('\t');
-      
-      if (!name || !dateLocation) continue;
+      // If line ends with "Conferences", it's a region header
+      if (line.endsWith('Conferences')) {
+        currentRegion = line.replace('Conferences', '').trim();
+        regionCounts[currentRegion] = 0;
+        continue;
+      }
 
-      const location = dateLocation.split(',')[1]?.trim() || '';
-      const date = dateLocation.split(',')[0]?.trim() || '';
+      // Skip the header row
+      if (isHeader) {
+        isHeader = false;
+        continue;
+      }
+
+      // Split the line by tabs and clean up each field
+      const [name, dateLocation, size, description, url, price] = line.split('\t').map(field => field?.trim() || '');
+      
+      if (!name || !dateLocation) {
+        console.warn('Skipping line due to missing name or location:', line);
+        continue;
+      }
+
+      const [date, location] = dateLocation.split(',').map(part => part?.trim() || '');
 
       // Use hardcoded coordinates if available, otherwise geocode
       const coordinates = cityCoordinates[location] || await geocodeLocation(location);
@@ -99,6 +120,21 @@ export async function parseEvents(): Promise<EventLocation[]> {
         longitude: coordinates[1],
         region: currentRegion
       });
+
+      regionCounts[currentRegion]++;
+    }
+
+    // Log statistics
+    console.log('Events parsed by region:');
+    Object.entries(regionCounts).forEach(([region, count]) => {
+      console.log(`${region}: ${count} events`);
+    });
+    console.log(`Total events: ${events.length}`);
+
+    // Log events with default coordinates (0,0)
+    const defaultCoordEvents = events.filter(e => e.latitude === 0 && e.longitude === 0);
+    if (defaultCoordEvents.length > 0) {
+      console.warn('Events with default coordinates:', defaultCoordEvents.map(e => e.name));
     }
 
     return events;
