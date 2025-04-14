@@ -4,6 +4,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  basePath: '/saas-maps-v3',
+  assetPrefix: '/saas-maps-v3',
 }
 
 module.exports = nextConfig 
