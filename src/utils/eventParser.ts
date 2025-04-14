@@ -21,6 +21,18 @@ const geocodeLocation = async (location: string): Promise<[number, number]> => {
   }
 };
 
+// Clean URL function
+const cleanUrl = (url: string): string => {
+  if (!url || url === '#') return '#';
+  // Remove any protocol prefix
+  let cleanUrl = url.replace(/^https?:\/\//, '');
+  // Remove trailing slashes
+  cleanUrl = cleanUrl.replace(/\/+$/, '');
+  // Remove www. if present
+  cleanUrl = cleanUrl.replace(/^www\./, '');
+  return cleanUrl;
+};
+
 // Hardcoded coordinates for major cities to avoid rate limiting during development
 const cityCoordinates: Record<string, [number, number]> = {
   'San Francisco': [37.7749, -122.4194],
@@ -81,7 +93,7 @@ export async function parseEvents(): Promise<EventLocation[]> {
         location,
         size: size || 'N/A',
         description: description || '',
-        url: url || '#',
+        url: cleanUrl(url || '#'),
         price: price || 'N/A',
         latitude: coordinates[0],
         longitude: coordinates[1],

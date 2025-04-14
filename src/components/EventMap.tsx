@@ -50,6 +50,15 @@ export default function EventMap({ events }: EventMapProps) {
     };
   }, []);
 
+  // Function to fix URLs
+  const fixUrl = (url: string) => {
+    if (!url) return '#';
+    // Remove any protocol prefix if exists
+    const cleanUrl = url.replace(/^https?:\/\//, '');
+    // Remove the GitHub Pages base path if it exists
+    return cleanUrl.replace(/^jaycobski\.github\.io\/saas-maps-v3\//, '');
+  };
+
   if (!mounted) {
     return (
       <div className="w-full h-[600px] flex items-center justify-center bg-gray-100 rounded-lg">
@@ -84,7 +93,7 @@ export default function EventMap({ events }: EventMapProps) {
                 <p className="text-sm">Size: {event.size}</p>
                 <p className="text-sm">Price: {event.price}</p>
                 <a
-                  href={event.url}
+                  href={`https://${fixUrl(event.url)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:text-blue-700 text-sm"
