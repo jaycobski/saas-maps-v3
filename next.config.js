@@ -7,6 +7,7 @@ const nextConfig = {
   basePath: '/saas-maps-v3',
   assetPrefix: '/saas-maps-v3/',
   trailingSlash: true,
+  distDir: 'out',
 }
 
 module.exports = nextConfig 
