@@ -6,15 +6,13 @@ import L from 'leaflet';
 import { EventLocation } from '@/types/events';
 import 'leaflet/dist/leaflet.css';
 
-// Fix for default marker icons in Leaflet with Next.js
-const defaultIcon = L.icon({
-  iconUrl: '/images/marker-icon.png',
-  iconRetinaUrl: '/images/marker-icon-2x.png',
-  shadowUrl: '/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+// Create a custom div icon using rocket emoji
+const rocketIcon = L.divIcon({
+  html: '🚀',
+  className: 'rocket-marker',
+  iconSize: [25, 25],
+  iconAnchor: [12, 24],
+  popupAnchor: [0, -24],
 });
 
 interface EventMapProps {
@@ -26,8 +24,30 @@ export default function EventMap({ events }: EventMapProps) {
 
   useEffect(() => {
     setMounted(true);
-    // Reset marker's default icon
-    L.Marker.prototype.options.icon = defaultIcon;
+    
+    // Add custom styles for the rocket marker
+    const style = document.createElement('style');
+    style.textContent = `
+      .rocket-marker {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        font-size: 25px;
+        background: none;
+        border: none;
+        transform: rotate(-45deg);
+        transition: transform 0.3s ease;
+      }
+      .rocket-marker:hover {
+        transform: rotate(-45deg) scale(1.2);
+        z-index: 1000 !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
   }, []);
 
   if (!mounted) {
@@ -54,6 +74,7 @@ export default function EventMap({ events }: EventMapProps) {
           <Marker
             key={`${event.name}-${index}`}
             position={[event.latitude, event.longitude]}
+            icon={rocketIcon}
           >
             <Popup>
               <div className="p-2">
